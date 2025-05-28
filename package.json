@@ -28,6 +28,11 @@
     "dist:win": "npm run build && electron-builder --win --publish=never",
     "dist:mac": "npm run build && electron-builder --mac --publish=never",
     "dist:linux": "npm run build && electron-builder --linux --publish=never",
+    "dist:mac:x64": "npm run build && electron-builder --mac --x64 --publish=never",
+    "dist:mac:arm64": "npm run build && electron-builder --mac --arm64 --publish=never",
+    "dist:mac:universal": "npm run build && electron-builder --mac --universal --publish=never",
+    "release": "npm run build && electron-builder --publish=always",
+    "release:mac": "npm run build && electron-builder --mac --publish=always",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -136,7 +141,23 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "assets/app.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist",
       "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
         {
           "target": "zip",
           "arch": [
@@ -144,7 +165,7 @@
           ]
         },
         {
-          "target": "dmg",
+          "target": "zip",
           "arch": [
             "arm64"
           ]
@@ -225,8 +246,8 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "yourusername",
-      "repo": "clipsync"
+      "owner": "ahadalichowdhury",
+      "repo": "ClipSync"
     }
   }
 }
