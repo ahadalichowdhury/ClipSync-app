@@ -6,7 +6,7 @@ interface AboutProps {
   onOpenSettings?: () => void;
 }
 
-export function About({ isOpen, onClose, onOpenSettings }: AboutProps) {
+export function About({ isOpen }: AboutProps) {
   const [appVersion, setAppVersion] = useState('1.0.0');
 
   useEffect(() => {
@@ -55,8 +55,7 @@ export function About({ isOpen, onClose, onOpenSettings }: AboutProps) {
         {/* Description */}
         <div className="mb-6">
           <p className="text-light-text-primary dark:text-dark-text-primary mb-4">
-            A powerful clipboard manager inspired by Windows 11, designed for
-            macOS and Linux.
+            A powerful clipboard manager, designed for macOS.
           </p>
 
           <div className="space-y-3">

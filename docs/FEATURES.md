@@ -77,9 +77,9 @@ class SearchEngine {
 
 ---
 
-### 3. Windows 11-Inspired UI
+### 3. UI
 
-**Description**: Modern, clean interface following Windows 11 design principles.
+**Description**: Modern, clean interface.
 
 **Design Elements**:
 
@@ -171,7 +171,6 @@ class SearchEngine {
 
 - Windows notification system
 - Jump list integration
-- Windows 11 context menu integration
 
 ---
 

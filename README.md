@@ -1,203 +1,286 @@
-# ClipSync - Cross-Platform Clipboard Manager
+# 📋 ClipSync
 
-A modern, Windows 11-inspired clipboard manager built with Electron.js for seamless cross-platform compatibility on Linux, macOS, and Windows.
+<div align="center">
 
-## 🚀 Features
+![ClipSync Logo](assets/app.png)
 
-### Core Clipboard Features
+**A modern, Windows 11-inspired clipboard manager built with Electron.js for cross-platform compatibility**
 
-- **Multi-format Support**: Text, images, files, rich text (HTML), and code snippets
-- **Clipboard History**: Store up to 1000 clipboard entries with configurable limits
-- **Real-time Monitoring**: Automatic clipboard change detection
-- **Quick Access**: Global hotkey support (Ctrl/Cmd + Shift + V), use custom option for set hot key
-- **Search & Filter**: Instant search through clipboard history
-- **Pin Favorites**: Pin frequently used items for quick access
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![Electron](https://img.shields.io/badge/Electron-36.3.1-blue)](https://electronjs.org/)
+[![React](https://img.shields.io/badge/React-18.2.0-blue)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.2-blue)](https://www.typescriptlang.org/)
 
-### Windows 11-Inspired UI
+[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Development](#-development) • [Contributing](#-contributing)
 
-- **Modern Design**: Clean, minimalist interface matching Windows 11 aesthetics
-- **Dark/Light Theme**: Automatic theme switching based on system preferences
-- **Fluent Design**: Acrylic blur effects and smooth animations
-- **Grid/List View**: Toggle between different viewing modes
-- **Preview Support**: Rich previews for images, text, and files
+</div>
 
-### Advanced Features
+## 🌟 Features
 
-- **Smart Categories**: Auto-categorization (Text, Images, Files, URLs, etc.)
-- **Sync Across Devices**: Optional cloud sync (future feature)
-- **Privacy Mode**: Exclude sensitive apps from clipboard monitoring
-- **Custom Shortcuts**: User-defined keyboard shortcuts
-- **Export/Import**: Backup and restore clipboard history
-- **Statistics**: Usage analytics and insights
+### 📋 **Smart Clipboard Management**
 
-### Security & Privacy
+- **Real-time monitoring** of system clipboard with persistent history
+- **Multi-format support**: Text, Images, Files, HTML, RTF
+- **Intelligent categorization** with auto-detection
+- **Duplicate detection** and smart merging
+- **Pin important items** for quick access
 
-- **Local Storage**: All data stored locally by default
-- **Encryption**: Optional encryption for sensitive clipboard data
-- **Auto-cleanup**: Configurable automatic cleanup of old entries
-- **Blacklist Apps**: Exclude specific applications from monitoring
+### 🔍 **Powerful Search & Filter**
 
-## 🛠 Technology Stack
+- **Instant search** with fuzzy matching
+- **Content type filtering** (Text, Images, Files, URLs, Code)
+- **Date range filters** (Today, Week, Month, Custom)
+- **Source application filtering**
+- **Advanced search** with regex support
 
-- **Frontend**: Electron.js with React
-- **UI Framework**: React with Tailwind CSS
-- **Database**: mainly store on the local own pc, otherwise use mongodb
-- **Icons**: Lucide React
-- **Animations**: Framer Motion
-- **Build Tool**: Vite
-- **Testing**: Jest + React Testing Library
+### 🎨 **Modern Windows 11-Inspired UI**
 
-## 📁 Project Structure
+- **Fluent Design** with acrylic blur effects
+- **Dynamic theming** (Light, Dark, Auto)
+- **Responsive grid layout** (2-6 columns)
+- **Smooth animations** and transitions
+- **Accessibility compliant** (WCAG 2.1 AA)
 
+### ⚡ **System Integration**
+
+- **Global hotkeys** for quick access (`Ctrl/Cmd + Shift + V`)
+- **System tray integration** with context menu
+- **Auto-start on system boot** (optional)
+- **Cross-platform support** (Windows, macOS, Linux)
+
+### 🔒 **Privacy & Security**
+
+- **Local storage only** - no cloud sync
+- **Excluded apps** configuration
+- **Incognito mode** for sensitive operations
+- **Auto-cleanup** with configurable retention
+- **Optional data encryption**
+
+### 📊 **Advanced Features**
+
+- **Usage analytics** and statistics
+- **Export/Import** clipboard history
+- **Bulk operations** (delete, categorize)
+- **Keyboard shortcuts** for power users
+- **Plugin system** for extensibility
+
+## 🚀 Installation
+
+### Download Pre-built Binaries
+
+Visit our [Releases page](https://github.com/ahadalichowdhury/ClipSync/releases) to download the latest version:
+
+- **Windows**: `ClipSync-Setup-1.0.0.exe` or `ClipSync-1.0.0-portable.exe`
+- **macOS**: `ClipSync-1.0.0.dmg` or `ClipSync-1.0.0-mac.zip`
+- **Linux**: `ClipSync-1.0.0.AppImage` or `ClipSync-1.0.0.deb`
+
+### Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/ahadalichowdhury/ClipSync.git
+cd ClipSync
+
+# Install dependencies
+npm install
+
+# Development mode
+npm run dev
+
+# Build for production
+npm run build
+
+# Package for your platform
+npm run package
 ```
-clipboard/
-├── src/
-│   ├── main/                 # Electron main process
-│   │   ├── index.ts         # Main entry point
-│   │   ├── clipboard.ts     # Clipboard monitoring
-│   │   ├── database.ts      # SQLite database operations
-│   │   ├── shortcuts.ts     # Global shortcuts
-│   │   └── tray.ts          # System tray integration
-│   ├── renderer/            # Electron renderer process
-│   │   ├── components/      # React components
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── stores/          # Zustand stores
-│   │   ├── utils/           # Utility functions
-│   │   ├── styles/          # CSS and Tailwind config
-│   │   └── App.tsx          # Main React app
-│   └── preload/             # Preload scripts
-│       └── index.ts         # IPC bridge
-├── assets/                  # Static assets
-├── build/                   # Build configuration
-├── dist/                    # Built application
-├── docs/                    # Documentation
-└── tests/                   # Test files
-```
 
-## 🚀 Quick Start
+## 🎯 Usage
+
+### Quick Start
+
+1. **Launch ClipSync** from your applications menu
+2. **Copy anything** to your clipboard - it's automatically saved
+3. **Press `Ctrl/Cmd + Shift + V`** to open the clipboard manager
+4. **Click any item** to paste it instantly
+5. **Pin important items** using the pin icon
+6. **Search and filter** to find what you need quickly
+
+### Keyboard Shortcuts
+
+| Shortcut               | Action                     |
+| ---------------------- | -------------------------- |
+| `Ctrl/Cmd + Shift + V` | Show/Hide ClipSync window  |
+| `Ctrl/Cmd + Shift + C` | Clear clipboard history    |
+| `Ctrl/Cmd + Shift + P` | Pin current clipboard item |
+| `Escape`               | Hide window                |
+| `Enter`                | Paste selected item        |
+| `Delete`               | Remove selected item       |
+| `Ctrl/Cmd + F`         | Focus search box           |
+| `↑/↓`                  | Navigate items             |
+
+### Configuration
+
+Access settings through:
+
+- **System tray** → Right-click → Settings
+- **Main window** → Settings icon (⚙️)
+- **Keyboard** → `Ctrl/Cmd + ,`
+
+#### Key Settings
+
+- **Max History Items**: 40-1000 entries (default: 40)
+- **Global Hotkey**: Customize the main shortcut
+- **Auto-start**: Launch on system startup
+- **Theme**: Light, Dark, or Auto
+- **Excluded Apps**: Prevent monitoring specific applications
+- **Auto-cleanup**: Automatically remove old entries
+
+## 🛠️ Development
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
-- Git
+- **Node.js** ≥ 18.0.0
+- **npm** ≥ 8.0.0
+- **Git**
 
-### Installation
+### Project Structure
 
-1. **Clone the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd clipboard
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Start development server**
-
-   ```bash
-   npm run dev
-   ```
-
-4. **Build for production**
-   ```bash
-   npm run build
-   ```
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run test` - Run tests
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code with Prettier
-- `npm run package` - Package app for current platform
-- `npm run dist` - Build and package for all platforms
-
-## 🎯 Development Roadmap
-
-### Phase 1: Core Foundation (Weeks 1-2)
-
-- [x] Project setup and configuration
-- [ ] Basic Electron app structure
-- [ ] Clipboard monitoring implementation
-- [ ] SQLite database setup
-- [ ] Basic UI components
-
-### Phase 2: Essential Features (Weeks 3-4)
-
-- [ ] Clipboard history display
-- [ ] Search and filter functionality
-- [ ] Global hotkey support
-- [ ] System tray integration
-- [ ] Basic settings panel
-
-### Phase 3: Advanced UI (Weeks 5-6)
-
-- [ ] Windows 11-inspired design system
-- [ ] Dark/light theme support
-- [ ] Animations and transitions
-- [ ] Preview components
-- [ ] Grid/list view toggle
-
-### Phase 4: Enhanced Features (Weeks 7-8)
-
-- [ ] Smart categorization
-- [ ] Pin favorites functionality
-- [ ] Export/import features
-- [ ] Privacy and security settings
-- [ ] Statistics dashboard
-
-### Phase 5: Polish & Distribution (Weeks 9-10)
-
-- [ ] Performance optimization
-- [ ] Cross-platform testing
-- [ ] Auto-updater implementation
-- [ ] Documentation completion
-- [ ] Package for distribution
-
-## 🔧 Configuration
-
-The app supports extensive configuration through a settings file:
-
-```json
-{
-  "maxHistoryItems": 1000,
-  "globalHotkey": "CommandOrControl+Shift+V",
-  "theme": "auto",
-  "autoStart": true,
-  "monitorClipboard": true,
-  "excludedApps": [],
-  "categories": {
-    "autoDetect": true,
-    "customCategories": []
-  },
-  "privacy": {
-    "encryptData": false,
-    "autoCleanup": true,
-    "cleanupDays": 30
-  }
-}
 ```
+ClipSync/
+├── src/
+│   ├── main/           # Electron main process
+│   ├── renderer/       # React frontend
+│   ├── preload/        # Preload scripts
+│   └── shared/         # Shared types and utilities
+├── assets/             # Icons and resources
+├── docs/               # Documentation
+├── tests/              # Test files
+└── scripts/            # Build and utility scripts
+```
+
+### Development Commands
+
+```bash
+# Start development server
+npm run dev
+
+# Run tests
+npm test
+npm run test:watch
+npm run test:coverage
+
+# Linting and formatting
+npm run lint
+npm run lint:fix
+npm run format
+
+# Type checking
+npm run typecheck
+
+# Build for production
+npm run build
+
+# Package applications
+npm run package:win     # Windows
+npm run package:mac     # macOS
+npm run package:linux   # Linux
+```
+
+### Tech Stack
+
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **Backend**: Electron 36, Node.js
+- **State Management**: Zustand
+- **Testing**: Jest, React Testing Library
+- **Build**: Electron Vite, Electron Builder
+- **UI Components**: Lucide React, Framer Motion
+
+### Architecture
+
+ClipSync follows a clean architecture pattern:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Renderer      │    │   Main Process  │    │   System APIs   │
+│   (React UI)    │◄──►│   (Electron)    │◄──►│   (Clipboard)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         ▲                       ▲
+         │                       │
+         ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐
+│   State Store   │    │   Data Layer    │
+│   (Zustand)     │    │   (SQLite)      │
+└─────────────────┘    └─────────────────┘
+```
+
+## 📚 Documentation
+
+- **[Setup Guide](docs/SETUP.md)** - Detailed installation and configuration
+- **[Development Guide](docs/DEVELOPMENT.md)** - Contributing and development setup
+- **[API Documentation](docs/API.md)** - Internal API reference
+- **[Feature Specifications](docs/FEATURES.md)** - Detailed feature documentation
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Quick Contribution Steps
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Development Setup
+
+```bash
+# Fork and clone your fork
+git clone https://github.com/YOUR_USERNAME/ClipSync.git
+cd ClipSync
+
+# Add upstream remote
+git remote add upstream https://github.com/ahadalichowdhury/ClipSync.git
+
+# Install dependencies
+npm install
+
+# Start development
+npm run dev
+```
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 👨‍💻 Author
+
+**S. M. Ahad Ali Chowdhury**
+
+- Email: smahadalichowdhury@gmail.com
+- GitHub: [@ahadalichowdhury](https://github.com/ahadalichowdhury)
+
 ## 🙏 Acknowledgments
 
-- Inspired by Windows 11 Clipboard
-- Built with the amazing Electron.js framework
-- UI components inspired by modern design systems
+- **Electron.js** team for the amazing framework
+- **React** team for the powerful UI library
+- **Windows 11** design team for inspiration
+- **Open source community** for various libraries and tools
+
+## 📊 Project Stats
+
+![GitHub stars](https://img.shields.io/github/stars/ahadalichowdhury/ClipSync?style=social)
+![GitHub forks](https://img.shields.io/github/forks/ahadalichowdhury/ClipSync?style=social)
+![GitHub issues](https://img.shields.io/github/issues/ahadalichowdhury/ClipSync)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/ahadalichowdhury/ClipSync)
+
+---
+
+<div align="center">
+
+**⭐ Star this repository if you find it helpful!**
+
+[Report Bug](https://github.com/ahadalichowdhury/ClipSync/issues) • [Request Feature](https://github.com/ahadalichowdhury/ClipSync/issues) • [Discussions](https://github.com/ahadalichowdhury/ClipSync/discussions)
+
+</div>

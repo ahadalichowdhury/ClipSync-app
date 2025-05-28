@@ -188,7 +188,6 @@ const useClipboardStore = create<ClipboardStore>((set, get) => ({
 
 ## 🎨 UI/UX Design System
 
-### Windows 11 Design Principles
 
 1. **Fluent Design System**
 
@@ -428,5 +427,4 @@ jobs:
 - [Electron Documentation](https://www.electronjs.org/docs)
 - [React Documentation](https://react.dev)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [Windows 11 Design Guidelines](https://docs.microsoft.com/en-us/windows/apps/design/)
 - [macOS Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/macos)
