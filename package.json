@@ -28,6 +28,7 @@
     "dist:win": "npm run build && electron-builder --win --publish=never",
     "dist:mac": "npm run build && electron-builder --mac --publish=never",
     "dist:linux": "npm run build && electron-builder --linux --publish=never",
+    "dist:unsigned": "node scripts/build-unsigned.js",
     "dist:mac:x64": "npm run build && electron-builder --mac --x64 --publish=never",
     "dist:mac:arm64": "npm run build && electron-builder --mac --arm64 --publish=never",
     "dist:mac:universal": "npm run build && electron-builder --mac --universal --publish=never",
@@ -47,7 +48,9 @@
     "create-dock-icon": "node scripts/create-dock-icon.js",
     "create-icns": "node scripts/create-icns.js",
     "create-clipsync-icon": "node scripts/create-clipsync-icon.js",
-    "create-about-icon": "node scripts/create-about-icon.js"
+    "create-about-icon": "node scripts/create-about-icon.js",
+    "setup:snap": "bash scripts/setup-snap.sh",
+    "setup:flatpak": "bash scripts/setup-flatpak.sh"
   },
   "dependencies": {
     "@electron/remote": "^2.0.12",
@@ -197,6 +200,14 @@
     },
     "win": {
       "icon": "assets/icon.ico",
+      "publisherName": "S. M. Ahad Ali Chowdhury",
+      "verifyUpdateCodeSignature": false,
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
+      "certificateFile": "${env.WINDOWS_CERT_FILE}",
+      "certificatePassword": "${env.WINDOWS_CERT_PASSWORD}",
+      "timeStampServer": "http://timestamp.digicert.com",
       "target": [
         {
           "target": "nsis",
@@ -216,6 +227,16 @@
     "linux": {
       "icon": "assets/app.png",
       "category": "Utility",
+      "maintainer": "S. M. Ahad Ali Chowdhury <smahadalichowdhury@gmail.com>",
+      "vendor": "ClipSync",
+      "synopsis": "Modern clipboard manager for Linux",
+      "description": "A modern, cross-platform clipboard manager with smart categorization and search capabilities.",
+      "desktop": {
+        "Name": "ClipSync",
+        "Comment": "Modern Clipboard Manager",
+        "Keywords": "clipboard;manager;productivity;utility;",
+        "StartupNotify": "true"
+      },
       "target": [
         {
           "target": "AppImage",
@@ -231,6 +252,12 @@
         },
         {
           "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "snap",
           "arch": [
             "x64"
           ]

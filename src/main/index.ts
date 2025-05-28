@@ -337,6 +337,26 @@ class ClipSyncApp {
       movable: true,
       backgroundColor: '#f8f9fa', // Light theme background
       icon: this.appIcon, // Set the app icon
+      // Windows-specific options
+      ...(process.platform === 'win32' && {
+        skipTaskbar: true, // Don't show in taskbar initially
+        alwaysOnTop: false, // We'll control this manually
+        focusable: true,
+        minimizable: true,
+        maximizable: false,
+        frame: true, // Keep frame for better Windows integration
+        thickFrame: true, // Allow resizing
+      }),
+      // Linux-specific options
+      ...(process.platform === 'linux' && {
+        skipTaskbar: true, // Don't show in taskbar initially
+        alwaysOnTop: false, // We'll control this manually
+        focusable: true,
+        minimizable: true,
+        maximizable: false,
+        frame: true, // Keep frame for better Linux integration
+        transparent: false, // Avoid transparency issues on some Linux DEs
+      }),
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
         sandbox: false,
@@ -658,6 +678,15 @@ class ClipSyncApp {
           console.log('Setting up tray for Linux...');
           this.setupTray();
         }
+
+        // Linux-specific: Detect desktop environment and adjust behavior
+        this.detectLinuxDesktopEnvironment();
+      } else if (process.platform === 'win32') {
+        // Windows-specific: Always use tray icon for better integration
+        if (!this.tray) {
+          console.log('Setting up tray for Windows...');
+          this.setupTray();
+        }
       }
     } catch (error) {
       console.error('Error updating dock visibility:', error);
@@ -888,6 +917,69 @@ class ClipSyncApp {
 
       this.mainWindow.focus();
 
+      // Platform-specific window focus handling
+      if (process.platform === 'win32') {
+        // Windows-specific: Force window to top and focus
+        this.mainWindow.setAlwaysOnTop(true);
+        this.mainWindow.show();
+        this.mainWindow.focus();
+        this.mainWindow.setAlwaysOnTop(false);
+
+        // Additional Windows focus methods
+        this.mainWindow.moveTop();
+        this.mainWindow.setSkipTaskbar(false);
+
+        // Force focus with a slight delay
+        setTimeout(() => {
+          if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+            this.mainWindow.setAlwaysOnTop(true);
+            this.mainWindow.focus();
+            this.mainWindow.setAlwaysOnTop(false);
+            this.mainWindow.flashFrame(true); // Flash to get user attention
+            setTimeout(() => {
+              if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+                this.mainWindow.flashFrame(false); // Stop flashing
+              }
+            }, 100);
+          }
+        }, 50);
+      } else if (process.platform === 'linux') {
+        // Linux-specific: Handle different desktop environments
+        this.mainWindow.setAlwaysOnTop(true);
+        this.mainWindow.show();
+        this.mainWindow.focus();
+        this.mainWindow.setAlwaysOnTop(false);
+
+        // Additional Linux focus methods
+        this.mainWindow.moveTop();
+        this.mainWindow.setSkipTaskbar(false);
+
+        // Force focus with desktop environment specific handling
+        setTimeout(() => {
+          if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+            // Try multiple focus methods for different Linux DEs
+            this.mainWindow.setAlwaysOnTop(true);
+            this.mainWindow.focus();
+            this.mainWindow.setAlwaysOnTop(false);
+
+            // Additional focus attempt for stubborn window managers
+            this.mainWindow.show();
+            this.mainWindow.moveTop();
+
+            // Some Linux DEs need this extra nudge
+            setTimeout(() => {
+              if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+                this.mainWindow.focus();
+              }
+            }, 100);
+          }
+        }, 50);
+      } else {
+        // Bring to front on other platforms (macOS)
+        this.mainWindow.setAlwaysOnTop(true);
+        this.mainWindow.setAlwaysOnTop(false);
+      }
+
       // Only open DevTools when explicitly needed
       if (
         isDev &&
@@ -976,10 +1068,170 @@ class ClipSyncApp {
 
       this.mainWindow.focus();
 
-      // Bring to front on all platforms
-      this.mainWindow.setAlwaysOnTop(true);
-      this.mainWindow.setAlwaysOnTop(false);
-    }, 16); // ~1 frame delay at 60fps
+      // Platform-specific window focus handling
+      if (process.platform === 'win32') {
+        // Windows-specific: Force window to top and focus
+        this.mainWindow.setAlwaysOnTop(true);
+        this.mainWindow.show();
+        this.mainWindow.focus();
+        this.mainWindow.setAlwaysOnTop(false);
+
+        // Additional Windows focus methods
+        this.mainWindow.moveTop();
+        this.mainWindow.setSkipTaskbar(false);
+
+        // Force focus with a slight delay
+        setTimeout(() => {
+          if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+            this.mainWindow.setAlwaysOnTop(true);
+            this.mainWindow.focus();
+            this.mainWindow.setAlwaysOnTop(false);
+            this.mainWindow.flashFrame(true); // Flash to get user attention
+            setTimeout(() => {
+              if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+                this.mainWindow.flashFrame(false); // Stop flashing
+              }
+            }, 100);
+          }
+        }, 50);
+      } else if (process.platform === 'linux') {
+        // Linux implementation - handle different desktop environments
+        const { execSync } = require('child_process');
+
+        try {
+          let processName = '';
+          
+          // Try different methods based on available tools
+          // Method 1: Try xdotool (works on X11)
+          try {
+            const windowId = execSync('xdotool getactivewindow', { 
+              encoding: 'utf8', 
+              timeout: 1000,
+              stdio: ['pipe', 'pipe', 'ignore'] // Suppress stderr
+            }).trim();
+            
+            if (windowId) {
+              const pid = execSync(`xdotool getwindowpid ${windowId}`, { 
+                encoding: 'utf8', 
+                timeout: 1000,
+                stdio: ['pipe', 'pipe', 'ignore']
+              }).trim();
+              
+              if (pid) {
+                processName = execSync(`ps -p ${pid} -o comm=`, { 
+                  encoding: 'utf8', 
+                  timeout: 1000 
+                }).trim();
+              }
+            }
+          } catch (xdotoolError) {
+            // xdotool failed, try other methods
+          }
+
+          // Method 2: Try wmctrl (works on most X11 window managers)
+          if (!processName) {
+            try {
+              const activeWindow = execSync('wmctrl -l | grep "$(xprop -root _NET_ACTIVE_WINDOW | cut -d\' \' -f5)"', { 
+                encoding: 'utf8', 
+                timeout: 1000,
+                stdio: ['pipe', 'pipe', 'ignore']
+              }).trim();
+              
+              if (activeWindow) {
+                // Extract process name from window title or class
+                const windowClass = execSync('xprop -id $(xprop -root _NET_ACTIVE_WINDOW | cut -d\' \' -f5) WM_CLASS', { 
+                  encoding: 'utf8', 
+                  timeout: 1000,
+                  stdio: ['pipe', 'pipe', 'ignore']
+                }).trim();
+                
+                if (windowClass) {
+                  const match = windowClass.match(/"([^"]+)"/);
+                  if (match) {
+                    processName = match[1];
+                  }
+                }
+              }
+            } catch (wmctrlError) {
+              // wmctrl failed, try other methods
+            }
+          }
+
+          // Method 3: Try gdbus for GNOME/Wayland
+          if (!processName) {
+            try {
+              const gnomeWindows = execSync('gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval "global.get_window_actors().map(a => a.meta_window.get_wm_class()).join(\',\')"', { 
+                encoding: 'utf8', 
+                timeout: 1500,
+                stdio: ['pipe', 'pipe', 'ignore']
+              }).trim();
+              
+              if (gnomeWindows && gnomeWindows.includes('true')) {
+                // Parse the result to get the active window class
+                const match = gnomeWindows.match(/"([^"]+)"/);
+                if (match) {
+                  const windowClasses = match[1].split(',');
+                  if (windowClasses.length > 0) {
+                    processName = windowClasses[0]; // Get the first (likely active) window
+                  }
+                }
+              }
+            } catch (gnomeError) {
+              // GNOME method failed
+            }
+          }
+
+          // Method 4: Fallback - try ps with some heuristics
+          if (!processName) {
+            try {
+              const processes = execSync('ps aux --sort=-%cpu | head -10 | grep -v "ClipSync\\|electron" | awk \'{print $11}\' | head -1', { 
+                encoding: 'utf8', 
+                timeout: 1000 
+              }).trim();
+              
+              if (processes) {
+                processName = processes.split('/').pop() || processes;
+              }
+            } catch (psError) {
+              // ps method failed
+            }
+          }
+
+          if (processName && processName.trim()) {
+            const cleanProcessName = processName.trim();
+            
+            // Don't store ClipSync itself as target app
+            if (
+              cleanProcessName.toLowerCase() !== 'clipsync' &&
+              cleanProcessName.toLowerCase() !== 'electron' &&
+              !cleanProcessName.toLowerCase().includes('clipsync')
+            ) {
+              this.targetAppInfo = { processId: 0, bundleId: cleanProcessName };
+              console.log('Stored target app (Linux):', cleanProcessName);
+            } else {
+              console.log('Ignoring ClipSync app as target (Linux):', cleanProcessName);
+              this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
+            }
+          } else {
+            // Fallback when no specific app detected
+            this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
+            console.log('Linux target app detection failed, using fallback');
+          }
+        } catch (error) {
+          console.log('Linux target app detection failed, using fallback:', error.message);
+          this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
+        }
+      } else {
+        // Linux and other platforms - basic fallback
+        this.targetAppInfo = { processId: 0, bundleId: 'unknown' };
+        console.log(
+          'Stored generic target app for platform:',
+          process.platform
+        );
+      }
+    } catch (error) {
+      console.error('Error storing focused app:', error);
+    }
   }
 
   private hideWindow() {
@@ -1057,6 +1309,178 @@ class ClipSyncApp {
             console.log('Ignoring ClipSync app as target:', bundleId);
           }
         }
+      } else if (process.platform === 'win32') {
+        // Windows implementation - simplified approach
+        const { execSync } = require('child_process');
+
+        try {
+          // Get the foreground window process using a simpler PowerShell command
+          const result = execSync(
+            'powershell -Command "Get-Process | Where-Object {$_.MainWindowTitle -ne \\"\\"} | Sort-Object CPU -Descending | Select-Object -First 1 | Select-Object -ExpandProperty ProcessName"',
+            { encoding: 'utf8', timeout: 1500 }
+          );
+
+          if (result && result.trim()) {
+            const processName = result.trim();
+
+            // Don't store ClipSync itself as target app
+            if (
+              processName.toLowerCase() !== 'clipsync' &&
+              processName.toLowerCase() !== 'electron' &&
+              !processName.toLowerCase().includes('clipsync')
+            ) {
+              this.targetAppInfo = { processId: 0, bundleId: processName };
+              console.log('Stored target app (Windows):', processName);
+            } else {
+              console.log(
+                'Ignoring ClipSync app as target (Windows):',
+                processName
+              );
+              this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
+            }
+          } else {
+            // Fallback when no specific app detected
+            this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
+          }
+        } catch (error) {
+          console.log('Windows target app detection failed, using fallback');
+          // Fallback: just store a generic target
+          this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
+        }
+      } else if (process.platform === 'linux') {
+        // Linux implementation - handle different desktop environments
+        const { execSync } = require('child_process');
+
+        try {
+          let processName = '';
+          
+          // Try different methods based on available tools
+          // Method 1: Try xdotool (works on X11)
+          try {
+            const windowId = execSync('xdotool getactivewindow', { 
+              encoding: 'utf8', 
+              timeout: 1000,
+              stdio: ['pipe', 'pipe', 'ignore'] // Suppress stderr
+            }).trim();
+            
+            if (windowId) {
+              const pid = execSync(`xdotool getwindowpid ${windowId}`, { 
+                encoding: 'utf8', 
+                timeout: 1000,
+                stdio: ['pipe', 'pipe', 'ignore']
+              }).trim();
+              
+              if (pid) {
+                processName = execSync(`ps -p ${pid} -o comm=`, { 
+                  encoding: 'utf8', 
+                  timeout: 1000 
+                }).trim();
+              }
+            }
+          } catch (xdotoolError) {
+            // xdotool failed, try other methods
+          }
+
+          // Method 2: Try wmctrl (works on most X11 window managers)
+          if (!processName) {
+            try {
+              const activeWindow = execSync('wmctrl -l | grep "$(xprop -root _NET_ACTIVE_WINDOW | cut -d\' \' -f5)"', { 
+                encoding: 'utf8', 
+                timeout: 1000,
+                stdio: ['pipe', 'pipe', 'ignore']
+              }).trim();
+              
+              if (activeWindow) {
+                // Extract process name from window title or class
+                const windowClass = execSync('xprop -id $(xprop -root _NET_ACTIVE_WINDOW | cut -d\' \' -f5) WM_CLASS', { 
+                  encoding: 'utf8', 
+                  timeout: 1000,
+                  stdio: ['pipe', 'pipe', 'ignore']
+                }).trim();
+                
+                if (windowClass) {
+                  const match = windowClass.match(/"([^"]+)"/);
+                  if (match) {
+                    processName = match[1];
+                  }
+                }
+              }
+            } catch (wmctrlError) {
+              // wmctrl failed, try other methods
+            }
+          }
+
+          // Method 3: Try gdbus for GNOME/Wayland
+          if (!processName) {
+            try {
+              const gnomeWindows = execSync('gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval "global.get_window_actors().map(a => a.meta_window.get_wm_class()).join(\',\')"', { 
+                encoding: 'utf8', 
+                timeout: 1500,
+                stdio: ['pipe', 'pipe', 'ignore']
+              }).trim();
+              
+              if (gnomeWindows && gnomeWindows.includes('true')) {
+                // Parse the result to get the active window class
+                const match = gnomeWindows.match(/"([^"]+)"/);
+                if (match) {
+                  const windowClasses = match[1].split(',');
+                  if (windowClasses.length > 0) {
+                    processName = windowClasses[0]; // Get the first (likely active) window
+                  }
+                }
+              }
+            } catch (gnomeError) {
+              // GNOME method failed
+            }
+          }
+
+          // Method 4: Fallback - try ps with some heuristics
+          if (!processName) {
+            try {
+              const processes = execSync('ps aux --sort=-%cpu | head -10 | grep -v "ClipSync\\|electron" | awk \'{print $11}\' | head -1', { 
+                encoding: 'utf8', 
+                timeout: 1000 
+              }).trim();
+              
+              if (processes) {
+                processName = processes.split('/').pop() || processes;
+              }
+            } catch (psError) {
+              // ps method failed
+            }
+          }
+
+          if (processName && processName.trim()) {
+            const cleanProcessName = processName.trim();
+            
+            // Don't store ClipSync itself as target app
+            if (
+              cleanProcessName.toLowerCase() !== 'clipsync' &&
+              cleanProcessName.toLowerCase() !== 'electron' &&
+              !cleanProcessName.toLowerCase().includes('clipsync')
+            ) {
+              this.targetAppInfo = { processId: 0, bundleId: cleanProcessName };
+              console.log('Stored target app (Linux):', cleanProcessName);
+            } else {
+              console.log('Ignoring ClipSync app as target (Linux):', cleanProcessName);
+              this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
+            }
+          } else {
+            // Fallback when no specific app detected
+            this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
+            console.log('Linux target app detection failed, using fallback');
+          }
+        } catch (error) {
+          console.log('Linux target app detection failed, using fallback:', error.message);
+          this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
+        }
+      } else {
+        // Linux and other platforms - basic fallback
+        this.targetAppInfo = { processId: 0, bundleId: 'unknown' };
+        console.log(
+          'Stored generic target app for platform:',
+          process.platform
+        );
       }
     } catch (error) {
       console.error('Error storing focused app:', error);
@@ -1141,6 +1565,64 @@ class ClipSyncApp {
             console.log('Successfully pasted to target app:', targetBundle);
           }
         });
+      } else if (process.platform === 'win32' && this.targetAppInfo) {
+        // Windows implementation - improved pasting
+        const { exec } = require('child_process');
+
+        // Give a moment for the window to be hidden and focus to return to target app
+        setTimeout(() => {
+          // Use PowerShell to send Ctrl+V to the currently focused window
+          const script = `
+            Add-Type -AssemblyName System.Windows.Forms
+            [System.Windows.Forms.SendKeys]::SendWait("^v")
+          `;
+
+          exec(
+            `powershell -ExecutionPolicy Bypass -Command "${script}"`,
+            (error: any) => {
+              if (error) {
+                console.error('Error pasting on Windows:', error);
+                console.log('Trying Windows paste alternatives...');
+                this.tryWindowsPasteAlternatives();
+              } else {
+                console.log(
+                  'Successfully pasted on Windows to target app:',
+                  this.targetAppInfo?.bundleId
+                );
+              }
+            }
+          );
+        }, 300); // Longer delay to ensure focus returns to target app
+      } else if (process.platform === 'linux' && this.targetAppInfo) {
+        // Linux implementation - handle different desktop environments and display servers
+        const { exec } = require('child_process');
+
+        // Give a moment for the window to be hidden and focus to return to target app
+        setTimeout(() => {
+          // Try multiple pasting methods for different Linux environments
+
+          // Method 1: Try xdotool (works on X11)
+          exec('which xdotool', whichError => {
+            if (!whichError) {
+              exec('xdotool key ctrl+v', (xdotoolError: any) => {
+                if (xdotoolError) {
+                  console.log(
+                    'xdotool paste failed, trying alternative methods'
+                  );
+                  this.tryLinuxPasteAlternatives();
+                } else {
+                  console.log(
+                    'Successfully pasted on Linux using xdotool to target app:',
+                    this.targetAppInfo?.bundleId
+                  );
+                }
+              });
+            } else {
+              // xdotool not available, try alternatives
+              this.tryLinuxPasteAlternatives();
+            }
+          });
+        }, 300); // Longer delay to ensure focus returns to target app
       } else {
         // Fallback for other platforms or if no target app stored
         console.log('Content copied to clipboard (no target app available)');
@@ -1207,6 +1689,259 @@ class ClipSyncApp {
       console.error('Error extracting text from RTF:', error);
       return rtf;
     }
+  }
+
+  // Linux paste alternatives for different desktop environments
+  private tryLinuxPasteAlternatives(): void {
+    const { exec } = require('child_process');
+
+    // Method 2: Try ydotool (works on Wayland)
+    exec('which ydotool', ydotoolWhichError => {
+      if (!ydotoolWhichError) {
+        exec('ydotool key ctrl+v', (ydotoolError: any) => {
+          if (ydotoolError) {
+            console.log('ydotool paste failed, trying GNOME method');
+            this.tryGnomePaste();
+          } else {
+            console.log(
+              'Successfully pasted on Linux using ydotool to target app:',
+              this.targetAppInfo?.bundleId
+            );
+          }
+        });
+      } else {
+        // ydotool not available, try GNOME method
+        this.tryGnomePaste();
+      }
+    });
+  }
+
+  // GNOME/Wayland specific paste method
+  private tryGnomePaste(): void {
+    const { exec } = require('child_process');
+
+    // Method 3: Try gdbus for GNOME Shell
+    exec(
+      'gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval "imports.ui.main.panel.statusArea.keyboard._keyboardController._keyboardManager.keyval_name = 65535"',
+      (gnomeError: any) => {
+        if (gnomeError) {
+          console.log('GNOME paste method failed, trying KDE method');
+          this.tryKdePaste();
+        } else {
+          // Simulate Ctrl+V via GNOME
+          exec(
+            'gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval "imports.ui.main.keyboard._onKeyPress(null, {keyval: 118, state: 4})"',
+            (gnomePasteError: any) => {
+              if (gnomePasteError) {
+                console.log('GNOME paste simulation failed, trying KDE method');
+                this.tryKdePaste();
+              } else {
+                console.log(
+                  'Successfully pasted on Linux using GNOME method to target app:',
+                  this.targetAppInfo?.bundleId
+                );
+              }
+            }
+          );
+        }
+      }
+    );
+  }
+
+  // KDE specific paste method
+  private tryKdePaste(): void {
+    const { exec } = require('child_process');
+
+    // Method 4: Try KDE's kwriteconfig/qdbus
+    exec('which qdbus', qdbusWhichError => {
+      if (!qdbusWhichError) {
+        exec(
+          'qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Paste"',
+          (kdeError: any) => {
+            if (kdeError) {
+              console.log('KDE paste method failed, using final fallback');
+              this.tryFinalLinuxPasteFallback();
+            } else {
+              console.log(
+                'Successfully pasted on Linux using KDE method to target app:',
+                this.targetAppInfo?.bundleId
+              );
+            }
+          }
+        );
+      } else {
+        // qdbus not available, try final fallback
+        this.tryFinalLinuxPasteFallback();
+      }
+    });
+  }
+
+  // Final fallback for Linux pasting
+  private tryFinalLinuxPasteFallback(): void {
+    const { exec } = require('child_process');
+
+    // Method 5: Try generic X11 key simulation
+    exec('which xte', xteWhichError => {
+      if (!xteWhichError) {
+        exec(
+          'xte "keydown Control_L" "key v" "keyup Control_L"',
+          (xteError: any) => {
+            if (xteError) {
+              console.log(
+                'All Linux paste methods failed, content copied to clipboard'
+              );
+            } else {
+              console.log(
+                'Successfully pasted on Linux using xte to target app:',
+                this.targetAppInfo?.bundleId
+              );
+            }
+          }
+        );
+      } else {
+        console.log(
+          'All Linux paste methods failed, content copied to clipboard'
+        );
+      }
+    });
+  }
+
+  // Enhanced Windows paste with multiple fallback methods
+  private tryWindowsPasteAlternatives(): void {
+    const { exec } = require('child_process');
+
+    // Method 2: Try VBScript approach (more reliable on some systems)
+    const vbScript = `
+      Set WshShell = CreateObject("WScript.Shell")
+      WshShell.SendKeys "^v"
+    `;
+
+    exec(`echo '${vbScript}' | cscript //nologo`, (vbError: any) => {
+      if (vbError) {
+        console.log('VBScript paste failed, trying .NET approach');
+        this.tryDotNetPaste();
+      } else {
+        console.log(
+          'Successfully pasted on Windows using VBScript to target app:',
+          this.targetAppInfo?.bundleId
+        );
+      }
+    });
+  }
+
+  // .NET approach for Windows pasting
+  private tryDotNetPaste(): void {
+    const { exec } = require('child_process');
+
+    // Method 3: Try PowerShell with different execution policy
+    const script = `
+      Add-Type -AssemblyName System.Windows.Forms
+      [System.Windows.Forms.SendKeys]::SendWait("^v")
+    `;
+
+    exec(
+      `powershell -ExecutionPolicy Bypass -Command "${script}"`,
+      (dotnetError: any) => {
+        if (dotnetError) {
+          console.log(
+            'All Windows paste methods failed, content copied to clipboard'
+          );
+        } else {
+          console.log(
+            'Successfully pasted on Windows using .NET method to target app:',
+            this.targetAppInfo?.bundleId
+          );
+        }
+      }
+    );
+  }
+
+  // Linux-specific: Detect desktop environment and adjust behavior
+  private detectLinuxDesktopEnvironment(): void {
+    try {
+      const desktopSession = process.env.DESKTOP_SESSION || '';
+      const xdgCurrentDesktop = process.env.XDG_CURRENT_DESKTOP || '';
+      const gdmSession = process.env.GDMSESSION || '';
+
+      console.log('Linux Desktop Environment Detection:');
+      console.log('  DESKTOP_SESSION:', desktopSession);
+      console.log('  XDG_CURRENT_DESKTOP:', xdgCurrentDesktop);
+      console.log('  GDMSESSION:', gdmSession);
+
+      // Detect specific desktop environments
+      if (
+        xdgCurrentDesktop.toLowerCase().includes('gnome') ||
+        desktopSession.toLowerCase().includes('gnome') ||
+        gdmSession.toLowerCase().includes('gnome')
+      ) {
+        console.log('Detected GNOME desktop environment');
+        this.setupGnomeSpecificFeatures();
+      } else if (
+        xdgCurrentDesktop.toLowerCase().includes('kde') ||
+        desktopSession.toLowerCase().includes('kde') ||
+        desktopSession.toLowerCase().includes('plasma')
+      ) {
+        console.log('Detected KDE/Plasma desktop environment');
+        this.setupKdeSpecificFeatures();
+      } else if (
+        xdgCurrentDesktop.toLowerCase().includes('xfce') ||
+        desktopSession.toLowerCase().includes('xfce')
+      ) {
+        console.log('Detected XFCE desktop environment');
+        this.setupXfceSpecificFeatures();
+      } else if (
+        xdgCurrentDesktop.toLowerCase().includes('unity') ||
+        desktopSession.toLowerCase().includes('unity')
+      ) {
+        console.log('Detected Unity desktop environment');
+        this.setupUnitySpecificFeatures();
+      } else {
+        console.log('Unknown or generic desktop environment, using defaults');
+        this.setupGenericLinuxFeatures();
+      }
+
+      // Detect display server
+      if (process.env.WAYLAND_DISPLAY) {
+        console.log('Detected Wayland display server');
+      } else if (process.env.DISPLAY) {
+        console.log('Detected X11 display server');
+      } else {
+        console.log('Unknown display server');
+      }
+    } catch (error) {
+      console.error('Error detecting Linux desktop environment:', error);
+      this.setupGenericLinuxFeatures();
+    }
+  }
+
+  // GNOME-specific setup
+  private setupGnomeSpecificFeatures(): void {
+    console.log('Setting up GNOME-specific features...');
+    // GNOME-specific tray icon adjustments could go here
+  }
+
+  // KDE-specific setup
+  private setupKdeSpecificFeatures(): void {
+    console.log('Setting up KDE-specific features...');
+    // KDE-specific tray icon adjustments could go here
+  }
+
+  // XFCE-specific setup
+  private setupXfceSpecificFeatures(): void {
+    console.log('Setting up XFCE-specific features...');
+    // XFCE-specific tray icon adjustments could go here
+  }
+
+  // Unity-specific setup
+  private setupUnitySpecificFeatures(): void {
+    console.log('Setting up Unity-specific features...');
+    // Unity-specific tray icon adjustments could go here
+  }
+
+  // Generic Linux setup
+  private setupGenericLinuxFeatures(): void {
+    console.log('Setting up generic Linux features...');
+    // Generic Linux tray icon adjustments could go here
   }
 }
 

@@ -221,6 +221,37 @@ ClipSync follows a clean architecture pattern:
 - **[API Documentation](docs/API.md)** - Internal API reference
 - **[Feature Specifications](docs/FEATURES.md)** - Detailed feature documentation
 
+## 🔨 Build Guides
+
+- **[📖 Complete Build Guide](docs/BUILD_GUIDE.md)** - Step-by-step instructions for all platforms
+- **[⚡ Quick Build Reference](docs/QUICK_BUILD_REFERENCE.md)** - Copy-paste commands for quick builds
+- **[✅ Release Checklist](docs/RELEASE_CHECKLIST.md)** - Pre-release testing and distribution checklist
+
+### Platform-Specific Guides
+
+- **[🪟 Windows FREE Build](README_FREE_BUILD.md)** - Build Windows .exe without certificates
+- **[🐧 Linux Distribution](docs/LINUX_FREE_GUIDE.md)** - FREE Linux distribution options
+- **[🆓 FREE Code Signing](docs/FREE_SIGNING.md)** - Alternatives to expensive certificates
+
+### Quick Build Commands
+
+```bash
+# Build for all platforms (no signing)
+npm run dist:unsigned
+
+# Windows with self-signed certificate (FREE)
+powershell -ExecutionPolicy Bypass -File scripts/create-self-signed-cert.ps1
+npm run dist:win
+
+# Linux store setup (FREE)
+npm run setup:snap      # Snap Store
+npm run setup:flatpak   # Flathub
+
+# macOS
+npm run dist:mac        # Current architecture
+npm run dist:mac:universal  # Universal binary
+```
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
