@@ -9,7 +9,7 @@ export class SettingsManager {
       console.log('Initializing settings store...');
       this.store = new Store<Settings>({
         defaults: DEFAULT_SETTINGS,
-        name: 'clipsync-settings',
+        name: 'localclip-settings',
       });
       console.log('Settings store initialized successfully');
       console.log('Current settings:', this.store.store);

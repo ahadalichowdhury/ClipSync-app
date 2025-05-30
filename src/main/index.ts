@@ -4,7 +4,6 @@ import {
   globalShortcut,
   ipcMain,
   Menu,
-  screen,
   Tray,
 } from 'electron';
 import { join } from 'path';
@@ -16,7 +15,7 @@ import createTrayIcon from './createTrayIcon';
 import { JsonStorageManager } from './json-storage';
 import { SettingsManager } from './settings';
 
-class ClipSyncApp {
+class LocalClipApp {
   private mainWindow: BrowserWindow | null = null;
   private aboutWindow: BrowserWindow | null = null;
   private tray: Tray | null = null;
@@ -51,15 +50,15 @@ class ClipSyncApp {
       this.setupApp();
       this.setupIPC();
     } catch (error) {
-      console.error('Error initializing ClipSync:', error);
+      console.error('Error initializing LocalClip:', error);
       // Show error dialog and quit
       app.whenReady().then(() => {
         const { dialog } = require('electron');
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         dialog.showErrorBox(
-          'ClipSync Initialization Error',
-          `Failed to initialize ClipSync: ${errorMessage}`
+          'LocalClip Initialization Error',
+          `Failed to initialize LocalClip: ${errorMessage}`
         );
         app.quit();
       });
@@ -104,13 +103,13 @@ class ClipSyncApp {
         // Start clipboard monitoring based on settings
         await this.setupClipboardMonitoring();
 
-        console.log('ClipSync started. Showing welcome screen...');
+        console.log('LocalClip started. Showing welcome screen...');
 
         app.on('activate', () => {
           // On macOS it's common to re-create a window in the app when the
           // dock icon is clicked and there are no other windows open.
           if (BrowserWindow.getAllWindows().length === 0) {
-            this.showWindowAtCursor();
+            this.showWindow();
           }
         });
       } catch (error) {
@@ -302,7 +301,7 @@ class ClipSyncApp {
 
     this.aboutWindow.on('closed', () => {
       this.aboutWindow = null;
-      console.log('About window closed - ClipSync now running in background');
+      console.log('About window closed - LocalClip now running in background');
     });
 
     // Load the app (it will show the About component)
@@ -371,7 +370,7 @@ class ClipSyncApp {
       // If this window was created in response to a hotkey press, show it immediately
       if (this.shouldShowOnReady) {
         // Use smooth show for hotkey-triggered windows too
-        this.performSmoothShowAtPosition();
+        this.performSmoothShow();
         this.shouldShowOnReady = false;
       } else {
         // Don't show the window automatically - only show when hotkey is pressed
@@ -439,6 +438,43 @@ class ClipSyncApp {
     this.mainWindow.webContents.on('did-finish-load', () => {
       console.log('Renderer finished loading');
     });
+
+    this.mainWindow.focus();
+
+    // Platform-specific window focus handling
+    if (process.platform === 'win32') {
+      // Windows-specific: Force window to top and focus
+      this.mainWindow.setAlwaysOnTop(true);
+      this.mainWindow.show();
+      this.mainWindow.focus();
+      this.mainWindow.setAlwaysOnTop(false);
+
+      // Additional Windows focus methods
+      this.mainWindow.moveTop();
+      this.mainWindow.setSkipTaskbar(false);
+
+      // Force focus with a slight delay
+      setTimeout(() => {
+        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+          this.mainWindow.setAlwaysOnTop(true);
+          this.mainWindow.focus();
+          this.mainWindow.setAlwaysOnTop(false);
+          this.mainWindow.flashFrame(true); // Flash to get user attention
+          setTimeout(() => {
+            if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+              this.mainWindow.flashFrame(false); // Stop flashing
+            }
+          }, 100);
+        }
+      }, 50);
+    } else if (process.platform === 'linux') {
+      // Linux-specific: Handle different desktop environments
+      this.mainWindow.setAlwaysOnTop(true);
+      this.mainWindow.show();
+      this.mainWindow.focus();
+      this.mainWindow.setAlwaysOnTop(false);
+      this.mainWindow.moveTop();
+    }
   }
 
   private async setupGlobalShortcuts() {
@@ -479,8 +515,8 @@ class ClipSyncApp {
         // This is the target app where we'll paste the selected item
         this.storeFocusedApp();
 
-        // Show ClipSync window after capturing target
-        this.showWindowAtCursor();
+        // Show LocalClip window after capturing target
+        this.showWindow();
       });
 
       if (success) {
@@ -519,12 +555,12 @@ class ClipSyncApp {
 
       // Set tooltip with hotkey info
       const hotkeyInfo = this.currentHotkey ? ` (${this.currentHotkey})` : '';
-      this.tray.setToolTip(`ClipSync - Clipboard Manager${hotkeyInfo}`);
+      this.tray.setToolTip(`LocalClip - Clipboard Manager${hotkeyInfo}`);
 
       // Create context menu
       const contextMenu = Menu.buildFromTemplate([
         {
-          label: 'Show ClipSync',
+          label: 'Show LocalClip',
           click: () => this.showWindow(),
         },
         {
@@ -866,8 +902,9 @@ class ClipSyncApp {
 
       this.smoothShowWindow();
     } else {
+      // Set flag to show window when ready since this is triggered by hotkey
+      this.shouldShowOnReady = true;
       this.createWindow();
-      // Window will be shown when ready via shouldShowOnReady flag
     }
   }
 
@@ -949,289 +986,9 @@ class ClipSyncApp {
         this.mainWindow.show();
         this.mainWindow.focus();
         this.mainWindow.setAlwaysOnTop(false);
-
-        // Additional Linux focus methods
         this.mainWindow.moveTop();
-        this.mainWindow.setSkipTaskbar(false);
-
-        // Force focus with desktop environment specific handling
-        setTimeout(() => {
-          if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-            // Try multiple focus methods for different Linux DEs
-            this.mainWindow.setAlwaysOnTop(true);
-            this.mainWindow.focus();
-            this.mainWindow.setAlwaysOnTop(false);
-
-            // Additional focus attempt for stubborn window managers
-            this.mainWindow.show();
-            this.mainWindow.moveTop();
-
-            // Some Linux DEs need this extra nudge
-            setTimeout(() => {
-              if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-                this.mainWindow.focus();
-              }
-            }, 100);
-          }
-        }, 50);
-      } else {
-        // Bring to front on other platforms (macOS)
-        this.mainWindow.setAlwaysOnTop(true);
-        this.mainWindow.setAlwaysOnTop(false);
       }
-
-      // Only open DevTools when explicitly needed
-      if (
-        isDev &&
-        this.mainWindow.webContents &&
-        process.env.OPEN_DEVTOOLS === 'true'
-      ) {
-        this.mainWindow.webContents.openDevTools();
-      }
-    }, 16); // ~1 frame delay at 60fps
-  }
-
-  private showWindowAtCursor() {
-    if (!this.mainWindow) {
-      this.shouldShowOnReady = true;
-      this.createWindow();
-      return;
-    }
-
-    this.positionAndShowWindow();
-  }
-
-  private positionAndShowWindow() {
-    if (!this.mainWindow) return;
-
-    // Get cursor position and display (cached for performance)
-    const cursorPoint = screen.getCursorScreenPoint();
-    const display = screen.getDisplayNearestPoint(cursorPoint);
-
-    // Use fixed window size for faster calculation
-    const windowWidth = 400;
-    const windowHeight = 500;
-    let x = cursorPoint.x - windowWidth / 2;
-    let y = cursorPoint.y - 50; // Show slightly above cursor
-
-    // Ensure window stays within screen bounds
-    const workArea = display.workArea;
-    x = Math.max(
-      workArea.x,
-      Math.min(x, workArea.x + workArea.width - windowWidth)
-    );
-    y = Math.max(
-      workArea.y,
-      Math.min(y, workArea.y + workArea.height - windowHeight)
-    );
-
-    // Position window first (while hidden)
-    this.mainWindow.setPosition(Math.round(x), Math.round(y));
-
-    if (this.mainWindow.isMinimized()) {
-      this.mainWindow.restore();
-    }
-
-    // Use the same smooth show logic
-    this.performSmoothShowAtPosition();
-  }
-
-  private performSmoothShowAtPosition() {
-    if (!this.mainWindow) return;
-
-    // Set opacity to 0 and show
-    this.mainWindow.setOpacity(0);
-    this.mainWindow.show();
-
-    // Small delay to ensure window is rendered
-    setTimeout(() => {
-      if (!this.mainWindow) return;
-
-      // Smooth fade in with easing
-      let opacity = 0;
-      const startTime = Date.now();
-      const duration = 120; // Short duration for snappy feel
-
-      const fadeIn = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        // Ease-out animation for smoother feel
-        opacity = 1 - Math.pow(1 - progress, 3);
-
-        if (progress >= 1) {
-          opacity = 1;
-          clearInterval(fadeIn);
-        }
-        this.mainWindow?.setOpacity(opacity);
-      }, 8);
-
-      this.mainWindow.focus();
-
-      // Platform-specific window focus handling
-      if (process.platform === 'win32') {
-        // Windows-specific: Force window to top and focus
-        this.mainWindow.setAlwaysOnTop(true);
-        this.mainWindow.show();
-        this.mainWindow.focus();
-        this.mainWindow.setAlwaysOnTop(false);
-
-        // Additional Windows focus methods
-        this.mainWindow.moveTop();
-        this.mainWindow.setSkipTaskbar(false);
-
-        // Force focus with a slight delay
-        setTimeout(() => {
-          if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-            this.mainWindow.setAlwaysOnTop(true);
-            this.mainWindow.focus();
-            this.mainWindow.setAlwaysOnTop(false);
-            this.mainWindow.flashFrame(true); // Flash to get user attention
-            setTimeout(() => {
-              if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-                this.mainWindow.flashFrame(false); // Stop flashing
-              }
-            }, 100);
-          }
-        }, 50);
-      } else if (process.platform === 'linux') {
-        // Linux implementation - handle different desktop environments
-        const { execSync } = require('child_process');
-
-        try {
-          let processName = '';
-          
-          // Try different methods based on available tools
-          // Method 1: Try xdotool (works on X11)
-          try {
-            const windowId = execSync('xdotool getactivewindow', { 
-              encoding: 'utf8', 
-              timeout: 1000,
-              stdio: ['pipe', 'pipe', 'ignore'] // Suppress stderr
-            }).trim();
-            
-            if (windowId) {
-              const pid = execSync(`xdotool getwindowpid ${windowId}`, { 
-                encoding: 'utf8', 
-                timeout: 1000,
-                stdio: ['pipe', 'pipe', 'ignore']
-              }).trim();
-              
-              if (pid) {
-                processName = execSync(`ps -p ${pid} -o comm=`, { 
-                  encoding: 'utf8', 
-                  timeout: 1000 
-                }).trim();
-              }
-            }
-          } catch (xdotoolError) {
-            // xdotool failed, try other methods
-          }
-
-          // Method 2: Try wmctrl (works on most X11 window managers)
-          if (!processName) {
-            try {
-              const activeWindow = execSync('wmctrl -l | grep "$(xprop -root _NET_ACTIVE_WINDOW | cut -d\' \' -f5)"', { 
-                encoding: 'utf8', 
-                timeout: 1000,
-                stdio: ['pipe', 'pipe', 'ignore']
-              }).trim();
-              
-              if (activeWindow) {
-                // Extract process name from window title or class
-                const windowClass = execSync('xprop -id $(xprop -root _NET_ACTIVE_WINDOW | cut -d\' \' -f5) WM_CLASS', { 
-                  encoding: 'utf8', 
-                  timeout: 1000,
-                  stdio: ['pipe', 'pipe', 'ignore']
-                }).trim();
-                
-                if (windowClass) {
-                  const match = windowClass.match(/"([^"]+)"/);
-                  if (match) {
-                    processName = match[1];
-                  }
-                }
-              }
-            } catch (wmctrlError) {
-              // wmctrl failed, try other methods
-            }
-          }
-
-          // Method 3: Try gdbus for GNOME/Wayland
-          if (!processName) {
-            try {
-              const gnomeWindows = execSync('gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval "global.get_window_actors().map(a => a.meta_window.get_wm_class()).join(\',\')"', { 
-                encoding: 'utf8', 
-                timeout: 1500,
-                stdio: ['pipe', 'pipe', 'ignore']
-              }).trim();
-              
-              if (gnomeWindows && gnomeWindows.includes('true')) {
-                // Parse the result to get the active window class
-                const match = gnomeWindows.match(/"([^"]+)"/);
-                if (match) {
-                  const windowClasses = match[1].split(',');
-                  if (windowClasses.length > 0) {
-                    processName = windowClasses[0]; // Get the first (likely active) window
-                  }
-                }
-              }
-            } catch (gnomeError) {
-              // GNOME method failed
-            }
-          }
-
-          // Method 4: Fallback - try ps with some heuristics
-          if (!processName) {
-            try {
-              const processes = execSync('ps aux --sort=-%cpu | head -10 | grep -v "ClipSync\\|electron" | awk \'{print $11}\' | head -1', { 
-                encoding: 'utf8', 
-                timeout: 1000 
-              }).trim();
-              
-              if (processes) {
-                processName = processes.split('/').pop() || processes;
-              }
-            } catch (psError) {
-              // ps method failed
-            }
-          }
-
-          if (processName && processName.trim()) {
-            const cleanProcessName = processName.trim();
-            
-            // Don't store ClipSync itself as target app
-            if (
-              cleanProcessName.toLowerCase() !== 'clipsync' &&
-              cleanProcessName.toLowerCase() !== 'electron' &&
-              !cleanProcessName.toLowerCase().includes('clipsync')
-            ) {
-              this.targetAppInfo = { processId: 0, bundleId: cleanProcessName };
-              console.log('Stored target app (Linux):', cleanProcessName);
-            } else {
-              console.log('Ignoring ClipSync app as target (Linux):', cleanProcessName);
-              this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
-            }
-          } else {
-            // Fallback when no specific app detected
-            this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
-            console.log('Linux target app detection failed, using fallback');
-          }
-        } catch (error) {
-          console.log('Linux target app detection failed, using fallback:', error.message);
-          this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
-        }
-      } else {
-        // Linux and other platforms - basic fallback
-        this.targetAppInfo = { processId: 0, bundleId: 'unknown' };
-        console.log(
-          'Stored generic target app for platform:',
-          process.platform
-        );
-      }
-    } catch (error) {
-      console.error('Error storing focused app:', error);
-    }
+    }, 50); // Close the setTimeout callback
   }
 
   private hideWindow() {
@@ -1258,7 +1015,7 @@ class ClipSyncApp {
       if (this.mainWindow.isVisible()) {
         this.hideWindow();
       } else {
-        this.showWindowAtCursor();
+        this.showWindow();
       }
     } else {
       this.createWindow();
@@ -1298,7 +1055,7 @@ class ClipSyncApp {
         if (result && result.trim()) {
           const bundleId = result.trim();
 
-          // Don't store ClipSync itself as target app
+          // Don't store LocalClip itself as target app
           if (
             bundleId !== 'com.github.Electron' &&
             bundleId !== app.getName()
@@ -1306,7 +1063,8 @@ class ClipSyncApp {
             this.targetAppInfo = { bundleId };
             console.log('Stored target app:', bundleId);
           } else {
-            console.log('Ignoring ClipSync app as target:', bundleId);
+            console.log('Target app is LocalClip itself, using fallback paste');
+            console.log('Content copied to clipboard (target was LocalClip)');
           }
         }
       } else if (process.platform === 'win32') {
@@ -1323,19 +1081,19 @@ class ClipSyncApp {
           if (result && result.trim()) {
             const processName = result.trim();
 
-            // Don't store ClipSync itself as target app
+            // Don't store LocalClip itself as target app
             if (
-              processName.toLowerCase() !== 'clipsync' &&
+              processName.toLowerCase() !== 'localclip' &&
               processName.toLowerCase() !== 'electron' &&
-              !processName.toLowerCase().includes('clipsync')
+              !processName.toLowerCase().includes('localclip')
             ) {
               this.targetAppInfo = { processId: 0, bundleId: processName };
               console.log('Stored target app (Windows):', processName);
             } else {
               console.log(
-                'Ignoring ClipSync app as target (Windows):',
-                processName
+                'Target app is LocalClip itself, using fallback paste'
               );
+              console.log('Content copied to clipboard (target was LocalClip)');
               this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
             }
           } else {
@@ -1353,27 +1111,27 @@ class ClipSyncApp {
 
         try {
           let processName = '';
-          
+
           // Try different methods based on available tools
           // Method 1: Try xdotool (works on X11)
           try {
-            const windowId = execSync('xdotool getactivewindow', { 
-              encoding: 'utf8', 
+            const windowId = execSync('xdotool getactivewindow', {
+              encoding: 'utf8',
               timeout: 1000,
-              stdio: ['pipe', 'pipe', 'ignore'] // Suppress stderr
+              stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
             }).trim();
-            
+
             if (windowId) {
-              const pid = execSync(`xdotool getwindowpid ${windowId}`, { 
-                encoding: 'utf8', 
+              const pid = execSync(`xdotool getwindowpid ${windowId}`, {
+                encoding: 'utf8',
                 timeout: 1000,
-                stdio: ['pipe', 'pipe', 'ignore']
+                stdio: ['pipe', 'pipe', 'ignore'],
               }).trim();
-              
+
               if (pid) {
-                processName = execSync(`ps -p ${pid} -o comm=`, { 
-                  encoding: 'utf8', 
-                  timeout: 1000 
+                processName = execSync(`ps -p ${pid} -o comm=`, {
+                  encoding: 'utf8',
+                  timeout: 1000,
                 }).trim();
               }
             }
@@ -1384,20 +1142,26 @@ class ClipSyncApp {
           // Method 2: Try wmctrl (works on most X11 window managers)
           if (!processName) {
             try {
-              const activeWindow = execSync('wmctrl -l | grep "$(xprop -root _NET_ACTIVE_WINDOW | cut -d\' \' -f5)"', { 
-                encoding: 'utf8', 
-                timeout: 1000,
-                stdio: ['pipe', 'pipe', 'ignore']
-              }).trim();
-              
+              const activeWindow = execSync(
+                'wmctrl -l | grep "$(xprop -root _NET_ACTIVE_WINDOW | cut -d\' \' -f5)"',
+                {
+                  encoding: 'utf8',
+                  timeout: 1000,
+                  stdio: ['pipe', 'pipe', 'ignore'],
+                }
+              ).trim();
+
               if (activeWindow) {
                 // Extract process name from window title or class
-                const windowClass = execSync('xprop -id $(xprop -root _NET_ACTIVE_WINDOW | cut -d\' \' -f5) WM_CLASS', { 
-                  encoding: 'utf8', 
-                  timeout: 1000,
-                  stdio: ['pipe', 'pipe', 'ignore']
-                }).trim();
-                
+                const windowClass = execSync(
+                  "xprop -id $(xprop -root _NET_ACTIVE_WINDOW | cut -d' ' -f5) WM_CLASS",
+                  {
+                    encoding: 'utf8',
+                    timeout: 1000,
+                    stdio: ['pipe', 'pipe', 'ignore'],
+                  }
+                ).trim();
+
                 if (windowClass) {
                   const match = windowClass.match(/"([^"]+)"/);
                   if (match) {
@@ -1413,12 +1177,15 @@ class ClipSyncApp {
           // Method 3: Try gdbus for GNOME/Wayland
           if (!processName) {
             try {
-              const gnomeWindows = execSync('gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval "global.get_window_actors().map(a => a.meta_window.get_wm_class()).join(\',\')"', { 
-                encoding: 'utf8', 
-                timeout: 1500,
-                stdio: ['pipe', 'pipe', 'ignore']
-              }).trim();
-              
+              const gnomeWindows = execSync(
+                'gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval "global.get_window_actors().map(a => a.meta_window.get_wm_class()).join(\',\')"',
+                {
+                  encoding: 'utf8',
+                  timeout: 1500,
+                  stdio: ['pipe', 'pipe', 'ignore'],
+                }
+              ).trim();
+
               if (gnomeWindows && gnomeWindows.includes('true')) {
                 // Parse the result to get the active window class
                 const match = gnomeWindows.match(/"([^"]+)"/);
@@ -1437,11 +1204,14 @@ class ClipSyncApp {
           // Method 4: Fallback - try ps with some heuristics
           if (!processName) {
             try {
-              const processes = execSync('ps aux --sort=-%cpu | head -10 | grep -v "ClipSync\\|electron" | awk \'{print $11}\' | head -1', { 
-                encoding: 'utf8', 
-                timeout: 1000 
-              }).trim();
-              
+              const processes = execSync(
+                'ps aux --sort=-%cpu | head -10 | grep -v "LocalClip\\|electron" | awk \'{print $11}\' | head -1',
+                {
+                  encoding: 'utf8',
+                  timeout: 1000,
+                }
+              ).trim();
+
               if (processes) {
                 processName = processes.split('/').pop() || processes;
               }
@@ -1452,17 +1222,20 @@ class ClipSyncApp {
 
           if (processName && processName.trim()) {
             const cleanProcessName = processName.trim();
-            
-            // Don't store ClipSync itself as target app
+
+            // Don't store LocalClip itself as target app
             if (
-              cleanProcessName.toLowerCase() !== 'clipsync' &&
+              cleanProcessName.toLowerCase() !== 'localclip' &&
               cleanProcessName.toLowerCase() !== 'electron' &&
-              !cleanProcessName.toLowerCase().includes('clipsync')
+              !cleanProcessName.toLowerCase().includes('localclip')
             ) {
               this.targetAppInfo = { processId: 0, bundleId: cleanProcessName };
               console.log('Stored target app (Linux):', cleanProcessName);
             } else {
-              console.log('Ignoring ClipSync app as target (Linux):', cleanProcessName);
+              console.log(
+                'Target app is LocalClip itself, using fallback paste'
+              );
+              console.log('Content copied to clipboard (target was LocalClip)');
               this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
             }
           } else {
@@ -1471,12 +1244,15 @@ class ClipSyncApp {
             console.log('Linux target app detection failed, using fallback');
           }
         } catch (error) {
-          console.log('Linux target app detection failed, using fallback:', error.message);
+          console.log(
+            'Linux target app detection failed, using fallback:',
+            error.message
+          );
           this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
         }
       } else {
         // Linux and other platforms - basic fallback
-        this.targetAppInfo = { processId: 0, bundleId: 'unknown' };
+        this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
         console.log(
           'Stored generic target app for platform:',
           process.platform
@@ -1534,13 +1310,16 @@ class ClipSyncApp {
       if (process.platform === 'darwin' && this.targetAppInfo?.bundleId) {
         const targetBundle = this.targetAppInfo.bundleId;
 
-        // Double-check we're not trying to paste to ClipSync itself
+        // Validate bundle ID and skip invalid ones
         if (
+          !targetBundle ||
+          targetBundle === 'unknown' ||
+          targetBundle === 'fallback' ||
           targetBundle === 'com.github.Electron' ||
           targetBundle === app.getName()
         ) {
-          console.log('Target app is ClipSync itself, using fallback paste');
-          console.log('Content copied to clipboard (target was ClipSync)');
+          console.log('Invalid or LocalClip target app, using fallback paste');
+          console.log('Content copied to clipboard (invalid target)');
           return;
         }
 
@@ -1946,4 +1725,4 @@ class ClipSyncApp {
 }
 
 // Create app instance
-new ClipSyncApp();
+new LocalClipApp();

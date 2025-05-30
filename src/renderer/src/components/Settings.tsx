@@ -342,7 +342,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
               </h3>
               <div className="space-y-3">
                 <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                  Press this key combination from anywhere to open ClipSync.
+                  Press this key combination from anywhere to open LocalClip.
                   Click "Change" and then press your desired key combination.
                   <br />
                   <strong>Note:</strong> Must include at least one modifier
@@ -449,8 +449,8 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
                       <label className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
                         Auto-start with system
                       </label>
-                      <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
-                        Launch ClipSync when your computer starts
+                      <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                        Launch LocalClip when your computer starts
                       </p>
                     </div>
                     <input
@@ -468,7 +468,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
                       <label className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
                         Monitor clipboard
                       </label>
-                      <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                      <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
                         Automatically save copied content to history
                       </p>
                     </div>
@@ -487,7 +487,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
                       <label className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
                         Smart categorization
                       </label>
-                      <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                      <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
                         Automatically categorize clipboard entries
                       </p>
                     </div>
@@ -505,7 +505,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
                     <label className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
                       Maximum history items: {settings.maxHistoryItems}
                     </label>
-                    <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                    <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
                       When limit is reached, oldest items are automatically
                       removed (FIFO)
                     </p>
@@ -535,7 +535,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
                       <label className="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
                         Hide from dock
                       </label>
-                      <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                      <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
                         {platform === 'darwin'
                           ? 'Hide from dock and show in menu bar'
                           : 'Show in system tray instead of dock'}

@@ -1,10 +1,10 @@
-# 📋 ClipSync
+# 📋 LocalClip
 
 <div align="center">
 
-![ClipSync Logo](assets/app.png)
+![LocalClip Logo](assets/app.png)
 
-**A modern, Windows 11-inspired clipboard manager built with Electron.js for cross-platform compatibility**
+**A modern, Windows 11-inspired clipboard manager with local storage and privacy-first design**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
@@ -69,18 +69,18 @@
 
 ### Download Pre-built Binaries
 
-Visit our [Releases page](https://github.com/ahadalichowdhury/ClipSync/releases) to download the latest version:
+Visit our [Releases page](https://github.com/ahadalichowdhury/LocalClip/releases) to download the latest version:
 
-- **Windows**: `ClipSync-Setup-1.0.0.exe` or `ClipSync-1.0.0-portable.exe`
-- **macOS**: `ClipSync-1.0.0.dmg` or `ClipSync-1.0.0-mac.zip`
-- **Linux**: `ClipSync-1.0.0.AppImage` or `ClipSync-1.0.0.deb`
+- **Windows**: `LocalClip-Setup-1.0.0.exe` or `LocalClip-1.0.0-portable.exe`
+- **macOS**: `LocalClip-1.0.0.dmg` or `LocalClip-1.0.0-mac.zip`
+- **Linux**: `LocalClip-1.0.0.AppImage` or `LocalClip-1.0.0.deb`
 
 ### Build from Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/ahadalichowdhury/ClipSync.git
-cd ClipSync
+git clone https://github.com/ahadalichowdhury/LocalClip.git
+cd LocalClip
 
 # Install dependencies
 npm install
@@ -99,7 +99,7 @@ npm run package
 
 ### Quick Start
 
-1. **Launch ClipSync** from your applications menu
+1. **Launch LocalClip** from your applications menu
 2. **Copy anything** to your clipboard - it's automatically saved
 3. **Press `Ctrl/Cmd + Shift + V`** to open the clipboard manager
 4. **Click any item** to paste it instantly
@@ -110,7 +110,7 @@ npm run package
 
 | Shortcut               | Action                     |
 | ---------------------- | -------------------------- |
-| `Ctrl/Cmd + Shift + V` | Show/Hide ClipSync window  |
+| `Ctrl/Cmd + Shift + V` | Show/Hide LocalClip window |
 | `Ctrl/Cmd + Shift + C` | Clear clipboard history    |
 | `Ctrl/Cmd + Shift + P` | Pin current clipboard item |
 | `Escape`               | Hide window                |
@@ -147,7 +147,7 @@ Access settings through:
 ### Project Structure
 
 ```
-ClipSync/
+LocalClip/
 ├── src/
 │   ├── main/           # Electron main process
 │   ├── renderer/       # React frontend
@@ -198,7 +198,7 @@ npm run package:linux   # Linux
 
 ### Architecture
 
-ClipSync follows a clean architecture pattern:
+LocalClip follows a clean architecture pattern:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -268,11 +268,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Fork and clone your fork
-git clone https://github.com/YOUR_USERNAME/ClipSync.git
-cd ClipSync
+git clone https://github.com/YOUR_USERNAME/LocalClip.git
+cd LocalClip
 
 # Add upstream remote
-git remote add upstream https://github.com/ahadalichowdhury/ClipSync.git
+git remote add upstream https://github.com/ahadalichowdhury/LocalClip.git
 
 # Install dependencies
 npm install
@@ -301,10 +301,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Stats
 
-![GitHub stars](https://img.shields.io/github/stars/ahadalichowdhury/ClipSync?style=social)
-![GitHub forks](https://img.shields.io/github/forks/ahadalichowdhury/ClipSync?style=social)
-![GitHub issues](https://img.shields.io/github/issues/ahadalichowdhury/ClipSync)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/ahadalichowdhury/ClipSync)
+![GitHub stars](https://img.shields.io/github/stars/ahadalichowdhury/LocalClip?style=social)
+![GitHub forks](https://img.shields.io/github/forks/ahadalichowdhury/LocalClip?style=social)
+![GitHub issues](https://img.shields.io/github/issues/ahadalichowdhury/LocalClip)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/ahadalichowdhury/LocalClip)
 
 ---
 
@@ -312,6 +312,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **⭐ Star this repository if you find it helpful!**
 
-[Report Bug](https://github.com/ahadalichowdhury/ClipSync/issues) • [Request Feature](https://github.com/ahadalichowdhury/ClipSync/issues) • [Discussions](https://github.com/ahadalichowdhury/ClipSync/discussions)
+[Report Bug](https://github.com/ahadalichowdhury/LocalClip/issues) • [Request Feature](https://github.com/ahadalichowdhury/LocalClip/issues) • [Discussions](https://github.com/ahadalichowdhury/LocalClip/discussions)
 
 </div>

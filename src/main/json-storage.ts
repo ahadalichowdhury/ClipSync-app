@@ -19,7 +19,7 @@ export class JsonStorageManager {
   constructor() {
     // Store in user data directory
     const userDataPath = app.getPath('userData');
-    this.dataPath = join(userDataPath, 'clipsync-data.json');
+    this.dataPath = join(userDataPath, 'localclip-data.json');
 
     // Initialize data structure
     this.data = {

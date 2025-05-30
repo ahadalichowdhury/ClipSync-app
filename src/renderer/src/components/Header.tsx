@@ -1,3 +1,4 @@
+import { Clipboard } from 'lucide-react';
 import React from 'react';
 
 interface HeaderProps {
@@ -12,13 +13,18 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-light-bg-secondary dark:bg-dark-bg-secondary border-b border-light-border dark:border-dark-border">
       <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">CS</span>
+            <Clipboard className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
-            ClipSync
-          </h1>
+          <div>
+            <h1 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary">
+              LocalClip
+            </h1>
+            <p className="text-xs text-light-text-tertiary dark:text-dark-text-tertiary">
+              Clipboard Manager
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">

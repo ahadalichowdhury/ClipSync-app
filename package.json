@@ -1,9 +1,9 @@
 {
-  "name": "clipsync",
+  "name": "localclip",
   "version": "1.0.0",
-  "description": "A modern, Windows 11-inspired clipboard manager built with Electron.js for cross-platform compatibility",
+  "description": "A modern, Windows 11-inspired clipboard manager with local storage and privacy-first design",
   "main": "out/main/index.js",
-  "homepage": "https://github.com/ahadalichowdhury/ClipSync",
+  "homepage": "https://github.com/ahadalichowdhury/LocalClip",
   "author": {
     "name": "S. M. Ahad Ali Chowdhury",
     "email": "smahadalichowdhury@gmail.com"
@@ -28,10 +28,11 @@
     "dist:win": "npm run build && electron-builder --win --publish=never",
     "dist:mac": "npm run build && electron-builder --mac --publish=never",
     "dist:linux": "npm run build && electron-builder --linux --publish=never",
-    "dist:unsigned": "node scripts/build-unsigned.js",
+    "dist:unsigned": "npm run build && electron-builder --mac --publish=never --config.mac.identity=null",
     "dist:mac:x64": "npm run build && electron-builder --mac --x64 --publish=never",
     "dist:mac:arm64": "npm run build && electron-builder --mac --arm64 --publish=never",
     "dist:mac:universal": "npm run build && electron-builder --mac --universal --publish=never",
+    "dist:dev": "npm run build && electron-builder --mac --publish=never --config.mac.hardenedRuntime=false --config.mac.gatekeeperAssess=false",
     "release": "npm run build && electron-builder --publish=always",
     "release:mac": "npm run build && electron-builder --mac --publish=always",
     "test": "jest",
@@ -47,7 +48,7 @@
     "create-icon": "node scripts/create-icon.js",
     "create-dock-icon": "node scripts/create-dock-icon.js",
     "create-icns": "node scripts/create-icns.js",
-    "create-clipsync-icon": "node scripts/create-clipsync-icon.js",
+    "create-localclip-icon": "node scripts/create-localclip-icon.js",
     "create-about-icon": "node scripts/create-about-icon.js",
     "setup:snap": "bash scripts/setup-snap.sh",
     "setup:flatpak": "bash scripts/setup-flatpak.sh"
@@ -115,14 +116,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ahadalichowdhury/ClipSync"
+    "url": "https://github.com/ahadalichowdhury/LocalClip"
   },
   "bugs": {
-    "url": "https://github.com/ahadalichowdhury/ClipSync"
+    "url": "https://github.com/ahadalichowdhury/LocalClip"
   },
   "build": {
-    "appId": "com.clipsync.app",
-    "productName": "ClipSync",
+    "appId": "com.localclip.app",
+    "productName": "LocalClip",
     "copyright": "Copyright © 2024 ${author}",
     "directories": {
       "output": "release/${version}"
@@ -144,10 +145,9 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "assets/app.icns",
-      "hardenedRuntime": true,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "entitlements": "assets/entitlements.mac.plist",
-      "entitlementsInherit": "assets/entitlements.mac.plist",
+      "identity": "Apple Development: smahadalichowdhury@gmail.com (52N947BX2B)",
       "target": [
         {
           "target": "dmg",
@@ -228,11 +228,11 @@
       "icon": "assets/app.png",
       "category": "Utility",
       "maintainer": "S. M. Ahad Ali Chowdhury <smahadalichowdhury@gmail.com>",
-      "vendor": "ClipSync",
+      "vendor": "LocalClip",
       "synopsis": "Modern clipboard manager for Linux",
       "description": "A modern, cross-platform clipboard manager with smart categorization and search capabilities.",
       "desktop": {
-        "Name": "ClipSync",
+        "Name": "LocalClip",
         "Comment": "Modern Clipboard Manager",
         "Keywords": "clipboard;manager;productivity;utility;",
         "StartupNotify": "true"
@@ -269,12 +269,12 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "ClipSync"
+      "shortcutName": "LocalClip"
     },
     "publish": {
       "provider": "github",
       "owner": "ahadalichowdhury",
-      "repo": "ClipSync"
+      "repo": "LocalClip"
     }
   }
 }

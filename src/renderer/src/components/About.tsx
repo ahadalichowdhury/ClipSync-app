@@ -1,3 +1,4 @@
+import { Clipboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface AboutProps {
@@ -6,7 +7,7 @@ interface AboutProps {
   onOpenSettings?: () => void;
 }
 
-export function About({ isOpen }: AboutProps) {
+export function About({ isOpen, onClose }: AboutProps) {
   const [appVersion, setAppVersion] = useState('1.0.0');
 
   useEffect(() => {
@@ -29,23 +30,11 @@ export function About({ isOpen }: AboutProps) {
       <div className="bg-light-bg-secondary dark:bg-dark-bg-secondary rounded-lg shadow-xl w-full h-full p-6 overflow-y-auto">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
+          <div className="w-16 h-16 bg-primary-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Clipboard className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary mb-2">
-            ClipSync
+            LocalClip
           </h2>
           <p className="text-light-text-secondary dark:text-dark-text-secondary">
             Version {appVersion}
@@ -53,30 +42,36 @@ export function About({ isOpen }: AboutProps) {
         </div>
 
         {/* Description */}
-        <div className="mb-6">
-          <p className="text-light-text-primary dark:text-dark-text-primary mb-4">
-            A powerful clipboard manager, designed for macOS.
+        <div className="space-y-4 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+          <p>
+            A modern, Windows 11-inspired clipboard manager with local storage
+            and privacy-first design.
           </p>
 
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-              <span className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                Smart clipboard monitoring and categorization
-              </span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-              <span className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                Customizable global hotkeys
-              </span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-              <span className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                Pin important clips and search history
-              </span>
-            </div>
+          <div className="bg-light-bg-tertiary dark:bg-dark-bg-tertiary rounded-lg p-4">
+            <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary mb-2">
+              Quick Start
+            </h3>
+            <p className="mb-2">
+              Press{' '}
+              <kbd className="px-2 py-1 bg-light-bg-primary dark:bg-dark-bg-primary border border-light-border dark:border-dark-border rounded text-xs">
+                Ctrl+Shift+V
+              </kbd>{' '}
+              (or{' '}
+              <kbd className="px-2 py-1 bg-light-bg-primary dark:bg-dark-bg-primary border border-light-border dark:border-dark-border rounded text-xs">
+                Cmd+Shift+V
+              </kbd>{' '}
+              on Mac) from anywhere to open LocalClip
+            </p>
+          </div>
+
+          <div className="text-center pt-4 border-t border-light-border dark:border-dark-border">
+            <p className="text-xs text-light-text-tertiary dark:text-dark-text-tertiary">
+              Built with ❤️ by S. M. Ahad Ali Chowdhury
+            </p>
+            <p className="text-xs text-light-text-tertiary dark:text-dark-text-tertiary mt-1">
+              © 2024 LocalClip. All rights reserved.
+            </p>
           </div>
         </div>
 
@@ -90,7 +85,7 @@ export function About({ isOpen }: AboutProps) {
             <kbd className="px-2 py-1 bg-light-bg-tertiary dark:bg-dark-bg-tertiary rounded text-xs font-mono">
               Cmd+Shift+V
             </kbd>{' '}
-            from anywhere to open ClipSync
+            from anywhere to open LocalClip
           </p>
           <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
             You can customize this hotkey in Settings
@@ -119,10 +114,13 @@ export function About({ isOpen }: AboutProps) {
         </div> */}
 
         {/* Footer */}
-        <div className="mt-6 pt-4 border-t border-light-border dark:border-dark-border text-center">
-          <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
-            ClipSync will now run in the background
-          </p>
+        <div className="flex justify-between items-center mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary transition-colors"
+          >
+            LocalClip will now run in the background
+          </button>
         </div>
       </div>
     </div>
