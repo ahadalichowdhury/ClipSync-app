@@ -23,10 +23,10 @@ class LocalClipApp {
   private storageManager!: JsonStorageManager;
   private settingsManager!: SettingsManager;
   private currentHotkey: string = '';
-  private isFirstRun: boolean = true;
   private shouldShowOnReady: boolean = false;
   private targetAppInfo: { bundleId?: string; processId?: number } | null =
     null;
+  private activeDisplay: any = null;
   private appIcon: string | undefined;
 
   constructor() {
@@ -369,8 +369,15 @@ class LocalClipApp {
     this.mainWindow.on('ready-to-show', () => {
       // If this window was created in response to a hotkey press, show it immediately
       if (this.shouldShowOnReady) {
-        // Use smooth show for hotkey-triggered windows too
-        this.performSmoothShow();
+        // Position window on correct screen if we have display info
+        if (this.activeDisplay) {
+          this.positionWindowOnActiveScreen(this.activeDisplay);
+          this.performSmoothShowWithFocus();
+          this.activeDisplay = null; // Clear after use
+        } else {
+          // Use smooth show for hotkey-triggered windows too
+          this.performSmoothShow();
+        }
         this.shouldShowOnReady = false;
       } else {
         // Don't show the window automatically - only show when hotkey is pressed
@@ -430,7 +437,7 @@ class LocalClipApp {
     // Add error handling for renderer loading
     this.mainWindow.webContents.on(
       'did-fail-load',
-      (event, errorCode, errorDescription) => {
+      (errorCode, errorDescription) => {
         console.error('Renderer failed to load:', errorCode, errorDescription);
       }
     );
@@ -515,8 +522,8 @@ class LocalClipApp {
         // This is the target app where we'll paste the selected item
         this.storeFocusedApp();
 
-        // Show LocalClip window after capturing target
-        this.showWindow();
+        // Show LocalClip window after capturing target with proper positioning
+        this.showWindowWithProperFocus();
       });
 
       if (success) {
@@ -561,7 +568,7 @@ class LocalClipApp {
       const contextMenu = Menu.buildFromTemplate([
         {
           label: 'Show LocalClip',
-          click: () => this.showWindow(),
+          click: () => this.showWindowWithProperFocus(),
         },
         {
           label: 'Settings',
@@ -745,7 +752,7 @@ class LocalClipApp {
 
   private setupIPC() {
     // Window management
-    ipcMain.handle('window:show', () => this.showWindow());
+    ipcMain.handle('window:show', () => this.showWindowWithProperFocus());
     ipcMain.handle('window:hide', () => this.hideWindow());
     ipcMain.handle('window:toggle', () => this.toggleWindow());
     ipcMain.handle('window:closeAbout', () => this.closeAboutWindow());
@@ -906,6 +913,204 @@ class LocalClipApp {
       this.shouldShowOnReady = true;
       this.createWindow();
     }
+  }
+
+  private showWindowWithProperFocus() {
+    try {
+      // Get cursor position and active screen info
+      const { screen } = require('electron');
+      const cursor = screen.getCursorScreenPoint();
+      const activeDisplay = screen.getDisplayNearestPoint(cursor);
+
+      console.log('🖱️ Cursor position:', cursor);
+      console.log('🖥️ Active display:', activeDisplay.bounds);
+
+      if (this.mainWindow) {
+        if (this.mainWindow.isMinimized()) {
+          this.mainWindow.restore();
+        }
+
+        // Position window on the screen where cursor/user is active
+        this.positionWindowOnActiveScreen(activeDisplay);
+        this.smoothShowWindowWithFocus();
+      } else {
+        // Store display info for when window is ready
+        this.activeDisplay = activeDisplay;
+        this.shouldShowOnReady = true;
+        this.createWindow();
+      }
+    } catch (error) {
+      console.error('Error showing window with proper focus:', error);
+      // Fallback to regular show
+      this.showWindow();
+    }
+  }
+
+  private positionWindowOnActiveScreen(display: any) {
+    if (!this.mainWindow) return;
+
+    try {
+      const { x, y, width, height } = display.bounds;
+      const windowBounds = this.mainWindow.getBounds();
+
+      // Center window on the active display
+      const centerX = x + (width - windowBounds.width) / 2;
+      const centerY = y + (height - windowBounds.height) / 2;
+
+      // Ensure window is within display bounds
+      const finalX = Math.max(
+        x,
+        Math.min(centerX, x + width - windowBounds.width)
+      );
+      const finalY = Math.max(
+        y,
+        Math.min(centerY, y + height - windowBounds.height)
+      );
+
+      console.log(
+        `📍 Positioning window at (${finalX}, ${finalY}) on display ${display.id}`
+      );
+      this.mainWindow.setPosition(
+        Math.round(finalX),
+        Math.round(finalY),
+        false
+      );
+
+      // Platform-specific focus handling
+      if (process.platform === 'darwin') {
+        // macOS: Handle fullscreen and Spaces properly
+        this.handleMacOSWindowFocus();
+      } else if (process.platform === 'win32') {
+        // Windows: Handle fullscreen apps and taskbar
+        this.handleWindowsWindowFocus();
+      } else {
+        // Linux: Handle different desktop environments
+        this.handleLinuxWindowFocus();
+      }
+    } catch (error) {
+      console.error('Error positioning window:', error);
+    }
+  }
+
+  private handleMacOSWindowFocus() {
+    if (!this.mainWindow) return;
+
+    try {
+      // Set window level to floating to appear above fullscreen apps
+      this.mainWindow.setAlwaysOnTop(true, 'floating');
+
+      // Force window to current Space/Desktop
+      const { app } = require('electron');
+      app.focus({ steal: true });
+
+      setTimeout(() => {
+        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+          this.mainWindow.focus();
+          this.mainWindow.moveTop();
+
+          // Reset always on top after showing
+          setTimeout(() => {
+            if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+              this.mainWindow.setAlwaysOnTop(false);
+            }
+          }, 100);
+        }
+      }, 50);
+    } catch (error) {
+      console.error('Error handling macOS window focus:', error);
+    }
+  }
+
+  private handleWindowsWindowFocus() {
+    if (!this.mainWindow) return;
+
+    try {
+      // Windows: Use screen-saver level to appear above fullscreen apps
+      this.mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      this.mainWindow.show();
+      this.mainWindow.focus();
+      this.mainWindow.flashFrame(true);
+
+      setTimeout(() => {
+        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+          this.mainWindow.flashFrame(false);
+          this.mainWindow.setAlwaysOnTop(false);
+          this.mainWindow.moveTop();
+        }
+      }, 150);
+    } catch (error) {
+      console.error('Error handling Windows window focus:', error);
+    }
+  }
+
+  private handleLinuxWindowFocus() {
+    if (!this.mainWindow) return;
+
+    try {
+      // Linux: Force window to top with high priority
+      this.mainWindow.setAlwaysOnTop(true, 'pop-up-menu');
+      this.mainWindow.show();
+      this.mainWindow.focus();
+      this.mainWindow.moveTop();
+
+      setTimeout(() => {
+        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+          this.mainWindow.setAlwaysOnTop(false);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error handling Linux window focus:', error);
+    }
+  }
+
+  private smoothShowWindowWithFocus() {
+    if (!this.mainWindow) return;
+
+    // Ensure window is ready before showing
+    if (!this.mainWindow.webContents.isLoading()) {
+      this.performSmoothShowWithFocus();
+    } else {
+      // Wait for content to load
+      this.mainWindow.webContents.once('did-finish-load', () => {
+        this.performSmoothShowWithFocus();
+      });
+    }
+  }
+
+  private performSmoothShowWithFocus() {
+    if (!this.mainWindow) return;
+
+    // Set opacity to 0 and show
+    this.mainWindow.setOpacity(0);
+    this.mainWindow.show();
+
+    // Small delay to ensure window is rendered
+    setTimeout(() => {
+      if (!this.mainWindow) return;
+
+      // Smooth fade in with easing
+      let opacity = 0;
+      const startTime = Date.now();
+      const duration = 120; // Short duration for snappy feel
+
+      const fadeIn = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease-out animation for smoother feel
+        opacity = 1 - Math.pow(1 - progress, 3);
+
+        if (progress >= 1) {
+          opacity = 1;
+          clearInterval(fadeIn);
+        }
+        this.mainWindow?.setOpacity(opacity);
+      }, 8);
+
+      // Focus after fade in starts
+      this.mainWindow.focus();
+      this.mainWindow.moveTop();
+    }, 50);
   }
 
   private smoothShowWindow() {
@@ -1243,7 +1448,7 @@ class LocalClipApp {
             this.targetAppInfo = { processId: 0, bundleId: 'fallback' };
             console.log('Linux target app detection failed, using fallback');
           }
-        } catch (error) {
+        } catch (error: any) {
           console.log(
             'Linux target app detection failed, using fallback:',
             error.message
@@ -1381,9 +1586,9 @@ class LocalClipApp {
           // Try multiple pasting methods for different Linux environments
 
           // Method 1: Try xdotool (works on X11)
-          exec('which xdotool', whichError => {
+          exec('which xdotool', (whichError: Error | null) => {
             if (!whichError) {
-              exec('xdotool key ctrl+v', (xdotoolError: any) => {
+              exec('xdotool key ctrl+v', (xdotoolError: Error | null) => {
                 if (xdotoolError) {
                   console.log(
                     'xdotool paste failed, trying alternative methods'
@@ -1475,9 +1680,9 @@ class LocalClipApp {
     const { exec } = require('child_process');
 
     // Method 2: Try ydotool (works on Wayland)
-    exec('which ydotool', ydotoolWhichError => {
+    exec('which ydotool', (ydotoolWhichError: Error | null) => {
       if (!ydotoolWhichError) {
-        exec('ydotool key ctrl+v', (ydotoolError: any) => {
+        exec('ydotool key ctrl+v', (ydotoolError: Error | null) => {
           if (ydotoolError) {
             console.log('ydotool paste failed, trying GNOME method');
             this.tryGnomePaste();
@@ -1532,11 +1737,11 @@ class LocalClipApp {
     const { exec } = require('child_process');
 
     // Method 4: Try KDE's kwriteconfig/qdbus
-    exec('which qdbus', qdbusWhichError => {
+    exec('which qdbus', (qdbusWhichError: Error | null) => {
       if (!qdbusWhichError) {
         exec(
           'qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Paste"',
-          (kdeError: any) => {
+          (kdeError: Error | null) => {
             if (kdeError) {
               console.log('KDE paste method failed, using final fallback');
               this.tryFinalLinuxPasteFallback();
@@ -1560,11 +1765,11 @@ class LocalClipApp {
     const { exec } = require('child_process');
 
     // Method 5: Try generic X11 key simulation
-    exec('which xte', xteWhichError => {
+    exec('which xte', (xteWhichError: Error | null) => {
       if (!xteWhichError) {
         exec(
           'xte "keydown Control_L" "key v" "keyup Control_L"',
-          (xteError: any) => {
+          (xteError: Error | null) => {
             if (xteError) {
               console.log(
                 'All Linux paste methods failed, content copied to clipboard'
